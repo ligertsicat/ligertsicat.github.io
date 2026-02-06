@@ -1,6 +1,7 @@
 import './style.css'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 
 const islands = [
   {
@@ -139,7 +140,7 @@ islandAngles.forEach((angle) => {
 const islandUrl = new URL('./fantasy_island.glb', import.meta.url).toString()
 loader.load(
   islandUrl,
-  (gltf) => {
+  (gltf: GLTF) => {
     islandMeshes.forEach((island) => {
       const model = gltf.scene.clone(true)
       model.scale.set(0.03, 0.03, 0.03)
@@ -148,7 +149,7 @@ loader.load(
     })
   },
   undefined,
-  (error) => {
+  (error: unknown) => {
     console.error('Failed to load island model', error)
   }
 )
@@ -160,7 +161,7 @@ scene.add(boat)
 const boatUrl = new URL('./BoatWSail.glb', import.meta.url).toString()
 loader.load(
   boatUrl,
-  (gltf) => {
+  (gltf: GLTF) => {
     const model = gltf.scene
     model.scale.set(0.9, 0.9, 0.9)
     model.rotation.y = Math.PI / 2
@@ -168,7 +169,7 @@ loader.load(
     boat.add(model)
   },
   undefined,
-  (error) => {
+  (error: unknown) => {
     console.error('Failed to load boat model', error)
   }
 )
@@ -281,8 +282,7 @@ const clock = new THREE.Clock()
 const labelAnchor = new THREE.Vector3()
 const labelScreen = new THREE.Vector3()
 const animate = () => {
-  const delta = clock.getDelta()
-  const elapsed = clock.elapsedTime
+  const elapsed = clock.getElapsedTime()
   boat.position.y = Math.sin(elapsed * 1.6) * 0.08
   boat.rotation.z = Math.sin(elapsed * 1.2) * 0.03
   waterUniforms.uTime.value = elapsed
