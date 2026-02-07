@@ -3,6 +3,9 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { Water } from 'three/examples/jsm/objects/Water'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass'
 
 const islands = [
   {
@@ -59,10 +62,21 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.setSize(window.innerWidth, window.innerHeight)
 
 const scene = new THREE.Scene()
-scene.fog = new THREE.Fog(0x0e1420, 10, 40)
+scene.fog = new THREE.Fog(0x0e1420, 10, 30)
 
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100)
 camera.position.set(0, 0, 20)
+
+const composer = new EffectComposer(renderer)
+composer.addPass(new RenderPass(scene, camera))
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  0.2,
+  0.4,
+  0.2
+)
+composer.addPass(bloomPass)
+
 
 const loader = new GLTFLoader()
 
@@ -477,7 +491,7 @@ const animate = () => {
   world.rotation.y = worldRotation + sway
 
   islandMeshes.forEach((island, index) => {
-    island.position.y = Math.sin(elapsed * 1.4 + index) * 0.05
+    island.position.y = -0.45 +Math.sin(elapsed * 1.4 + index) * 0.05
   })
 
   const width = renderer.domElement.clientWidth
@@ -504,7 +518,7 @@ const animate = () => {
     card.style.transform = `translate(-50%, -110%) translate(${x}px, ${y}px)`
   })
 
-  renderer.render(scene, camera)
+  composer.render()
   requestAnimationFrame(animate)
 }
 
@@ -515,4 +529,5 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  composer.setSize(window.innerWidth, window.innerHeight)
 })
