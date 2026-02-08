@@ -58,6 +58,9 @@ const islands = [
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div class="scene-root">
     <canvas id="scene"></canvas>
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+    </div>
     <header class="topbar">
       <div class="topbar-left">
         <div class="title">Lee Sicat</div>
@@ -66,7 +69,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <div class="topbar-right">
         <div class="hint">Use arrows, drag, or scroll to explore.</div>
         <div class="contact-inline">
-          <span>Contact Info: linkedin.com/in/ligertsicat</span>
+          <a class="contact-link" href="https://www.linkedin.com/in/ligert-sicat/" target="_blank" rel="noreferrer">linkedin.com/in/ligertsicat</a>
         </div>
       </div>
     </header>
@@ -94,6 +97,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 `
 
 const canvas = document.querySelector<HTMLCanvasElement>('#scene')!
+const loaderEl = document.querySelector<HTMLDivElement>('#loader')!
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
 renderer.setPixelRatio(1)
 renderer.setSize(window.innerWidth, window.innerHeight)
@@ -114,7 +118,14 @@ const bloomPass = new UnrealBloomPass(
 )
 composer.addPass(bloomPass)
 
-const loader = new GLTFLoader()
+const loadingManager = new THREE.LoadingManager()
+loadingManager.onLoad = () => {
+  loaderEl.classList.add('is-hidden')
+}
+loadingManager.onError = () => {
+  loaderEl.classList.add('is-hidden')
+}
+const loader = new GLTFLoader(loadingManager)
 
 const ambient = new THREE.AmbientLight(0x8aa0c8, 0.7)
 scene.add(ambient)

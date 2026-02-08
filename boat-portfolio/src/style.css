@@ -34,6 +34,7 @@ canvas#scene {
   display: block;
   width: 100%;
   height: 100%;
+  touch-action: none;
 }
 
 .hud {
@@ -62,6 +63,36 @@ canvas#scene {
   box-shadow: none;
   backdrop-filter: blur(8px);
   z-index: 3;
+}
+
+.loader {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(5, 8, 14, 0.85);
+  z-index: 5;
+  transition: opacity 200ms ease, visibility 200ms ease;
+}
+
+.loader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid rgba(234, 242, 255, 0.2);
+  border-top-color: rgba(234, 242, 255, 0.9);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .topbar-left {
@@ -109,6 +140,19 @@ canvas#scene {
   gap: 4px;
   font-size: 0.85rem;
   color: rgba(234, 242, 255, 0.75);
+}
+
+.contact-link {
+  color: rgba(234, 242, 255, 0.95);
+  text-decoration: none;
+}
+
+.contact-link:visited {
+  color: rgba(234, 242, 255, 0.95);
+}
+
+.contact-link:hover {
+  text-decoration: underline;
 }
 
 .labels {
