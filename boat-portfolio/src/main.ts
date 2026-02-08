@@ -58,11 +58,19 @@ const islands = [
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div class="scene-root">
     <canvas id="scene"></canvas>
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="title">Lee Sicat</div>
+        <div class="headline">Software Engineer building low-latency, high-scale distributed systems</div>
+      </div>
+      <div class="topbar-right">
+        <div class="hint">Explore with left/right keys or drag to scroll.</div>
+        <div class="contact-inline">
+          <span>Contact Info: linkedin.com/in/ligertsicat</span>
+        </div>
+      </div>
+    </header>
     <div class="hud">
-      <div class="title">Lee Sicat</div>
-      <div class="subtitle">Software Engineer building low-latency, high-scale distributed systems</div>
-
-      <div class="subtitle2">Explore with left/right keys or drag to scroll.</div>
       <div class="labels">
         ${islands
           .map(
@@ -80,12 +88,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         ${islands.map((_, index) => `<button class="dot" data-index="${index}"></button>`).join('')}
       </div>
     </div>
-    <div class="contact-pill">
-      <div class="contact-title">Contact</div>
-      <div class="contact-body">
-        <div>linkedin.com/in/ligertsicat</div>
-      </div>
-    </div>
     <button class="nav-arrow nav-arrow-left" aria-label="Previous island">‹</button>
     <button class="nav-arrow nav-arrow-right" aria-label="Next island">›</button>
   </div>
@@ -100,7 +102,7 @@ const scene = new THREE.Scene()
 scene.fog = new THREE.Fog(0x0e1420, 10, 70)
 
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100)
-camera.position.set(0, 0, 20)
+camera.position.set(0, 0, 19)
 
 const composer = new EffectComposer(renderer)
 composer.addPass(new RenderPass(scene, camera))
