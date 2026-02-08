@@ -95,7 +95,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 
 const canvas = document.querySelector<HTMLCanvasElement>('#scene')!
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.setPixelRatio(1)
 renderer.setSize(window.innerWidth, window.innerHeight)
 
 const scene = new THREE.Scene()
@@ -167,7 +167,7 @@ const skyMaterial = new THREE.ShaderMaterial({
   side: THREE.BackSide,
   uniforms: {
     uTop: { value: new THREE.Color(0x0a1c2e) },
-    uBottom: { value: new THREE.Color(0x650dd9) },
+    uBottom: { value: new THREE.Color(0x0a155e) },
   },
   vertexShader: `
     varying vec3 vPos;
@@ -338,7 +338,7 @@ const cloudUrl = new URL('./clouds.glb', import.meta.url).toString()
 loader.load(
   cloudUrl,
   (gltf: GLTF) => {
-    for (let i = 0; i < 20; i += 1) {
+    for (let i = 0; i < 8; i += 1) {
       const model = gltf.scene.clone(true)
       model.traverse((child) => {
         if ('material' in child) {
@@ -346,7 +346,7 @@ loader.load(
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
           materials.forEach((material) => {
             material.transparent = true
-            material.opacity = 0.2
+            material.opacity = 0.3
             material.depthWrite = false
           })
         }
@@ -404,7 +404,7 @@ if (starCtx) {
 }
 const starTexture = new THREE.CanvasTexture(starCanvas)
 
-for (let i = 0; i < 4; i += 1) {
+for (let i = 0; i < 2; i += 1) {
   const starGeo = new THREE.BufferGeometry()
   const starCount = 220
   const positions = new Float32Array(starCount * 3)
@@ -638,7 +638,7 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  renderer.setPixelRatio(1)
   composer.setSize(window.innerWidth, window.innerHeight)
 })
 
