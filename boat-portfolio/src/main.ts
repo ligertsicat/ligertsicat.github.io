@@ -89,42 +89,6 @@ const bloomPass = new UnrealBloomPass(
 )
 composer.addPass(bloomPass)
 
-const gradePass = new ShaderPass({
-  uniforms: {
-    tDiffuse: { value: null },
-    tint: { value: new THREE.Vector3(1.04, 1.0, 0.96) },
-    amount: { value: 0.2 },
-  },
-  vertexShader: `
-    varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: `
-    uniform sampler2D tDiffuse;
-    uniform vec3 tint;
-    uniform float amount;
-    varying vec2 vUv;
-    void main() {
-      vec4 color = texture2D(tDiffuse, vUv);
-      vec3 graded = color.rgb * tint;
-      color.rgb = mix(color.rgb, graded, amount);
-      gl_FragColor = color;
-    }
-  `,
-})
-// composer.addPass(gradePass)
-
-const bokehPass = new BokehPass(scene, camera, {
-  focus: 14.0,
-  aperture: 0.00012,
-  maxblur: 0.004,
-})
-// composer.addPass(bokehPass)
-
-
 const loader = new GLTFLoader()
 
 const ambient = new THREE.AmbientLight(0x8aa0c8, 0.7)
@@ -434,6 +398,22 @@ loader.load(
 
 
 const stars: THREE.Points[] = []
+const starCanvas = document.createElement('canvas')
+starCanvas.width = 64
+starCanvas.height = 64
+const starCtx = starCanvas.getContext('2d')
+if (starCtx) {
+  const gradient = starCtx.createRadialGradient(32, 32, 0, 32, 32, 32)
+  gradient.addColorStop(0, 'rgba(255,255,255,1)')
+  gradient.addColorStop(0.4, 'rgba(255,255,255,0.9)')
+  gradient.addColorStop(1, 'rgba(255,255,255,0)')
+  starCtx.fillStyle = gradient
+  starCtx.beginPath()
+  starCtx.arc(32, 32, 32, 0, Math.PI * 2)
+  starCtx.fill()
+}
+const starTexture = new THREE.CanvasTexture(starCanvas)
+
 for (let i = 0; i < 4; i += 1) {
   const starGeo = new THREE.BufferGeometry()
   const starCount = 220
@@ -455,6 +435,8 @@ for (let i = 0; i < 4; i += 1) {
     size: 0.14 - i * 0.012,
     transparent: true,
     opacity: 0.95 - i * 0.1,
+    map: starTexture,
+    alphaTest: 0.2,
   })
   const starField = new THREE.Points(starGeo, starMat)
   scene.add(starField)
@@ -631,22 +613,7 @@ const animate = () => {
       child.position.x = -40
     }
   })
-  const updateParticles = (field: { positions: Float32Array; velocities: Float32Array }) => {
-    const { positions, velocities } = field
-    for (let i = 0; i < positions.length; i += 3) {
-      positions[i] += velocities[i]
-      positions[i + 1] += velocities[i + 1]
-      positions[i + 2] += velocities[i + 2]
-      if (positions[i + 2] < -6 || positions[i + 1] > 0.8) {
-        positions[i] = (Math.random() - 0.5) * 0.6
-        positions[i + 1] = -0.6 + Math.random() * 0.3
-        positions[i + 2] = -3 + Math.random() * -1.2
-      }
-    }
-  }
-  // TODO
-  // updateParticles(mist)
-  // updateParticles(spray)
+
   ;(mist.points.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true
   ;(spray.points.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true
 
@@ -656,8 +623,6 @@ const animate = () => {
 
   stars.forEach((field, index) => {
     field.rotation.y = elapsed * 0.02 * (index + 1)
-    const base = 0.85 - index * 0.06
-    field.material.opacity = base + Math.sin(elapsed * (0.6 + index * 0.15)) * 0.06
   })
 
   if (snapping) {
