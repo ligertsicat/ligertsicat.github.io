@@ -64,7 +64,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         <div class="headline">Software Engineer building low-latency, high-scale distributed systems</div>
       </div>
       <div class="topbar-right">
-        <div class="hint">Explore with left/right keys or drag to scroll.</div>
+        <div class="hint">Use arrows, drag, or scroll to explore.</div>
         <div class="contact-inline">
           <span>Contact Info: linkedin.com/in/ligertsicat</span>
         </div>
@@ -524,44 +524,20 @@ dots.forEach((dot) => {
 })
 
 const stepRight = () => {
-  targetRotation = worldRotation - rotationStep
+  setActiveIndex(activeIndex + 1)
+  targetRotation = nearestTargetRotation(worldRotation, -islandAngles[activeIndex])
   snapping = true
 }
 
 const stepLeft = () => {
-  targetRotation = worldRotation + rotationStep
+  setActiveIndex(activeIndex - 1)
+  targetRotation = nearestTargetRotation(worldRotation, -islandAngles[activeIndex])
   snapping = true
 }
 
-let holdLeft = false
-let holdRight = false
-const holdSpeed = 0.012
-
-const startHoldLeft = () => {
-  holdLeft = true
-  holdRight = false
-  snapping = false
-}
-
-const startHoldRight = () => {
-  holdRight = true
-  holdLeft = false
-  snapping = false
-}
-
-const stopHold = () => {
-  holdLeft = false
-  holdRight = false
-}
 
 arrowRight?.addEventListener('click', stepRight)
 arrowLeft?.addEventListener('click', stepLeft)
-arrowRight?.addEventListener('pointerdown', startHoldRight)
-arrowLeft?.addEventListener('pointerdown', startHoldLeft)
-arrowRight?.addEventListener('pointerup', stopHold)
-arrowLeft?.addEventListener('pointerup', stopHold)
-arrowRight?.addEventListener('pointerleave', stopHold)
-arrowLeft?.addEventListener('pointerleave', stopHold)
 
 let worldRotation = 0
 let targetRotation = 0
@@ -651,20 +627,13 @@ const animate = () => {
   })
 
   if (snapping) {
-    worldRotation += (targetRotation - worldRotation) * 0.02
-    if (Math.abs(targetRotation - worldRotation) < 0.0005) {
+    worldRotation += (targetRotation - worldRotation) * 0.04
+    if (Math.abs(targetRotation - worldRotation) < 0.001) {
+      worldRotation = targetRotation
       snapping = false
     }
   } else {
     worldRotation += (targetRotation - worldRotation) * 0.02
-  }
-  if (holdLeft) {
-    worldRotation += holdSpeed
-    targetRotation = worldRotation
-  }
-  if (holdRight) {
-    worldRotation -= holdSpeed
-    targetRotation = worldRotation
   }
   const sway = Math.sin(elapsed * 0.6) * 0.03
   world.rotation.y = worldRotation + sway
