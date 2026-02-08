@@ -11,32 +11,49 @@ import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass'
 
 const islands = [
   {
-    title: 'Software Engineer',
-    role: 'Robinhood',
+    title: 'Robinhood',
+    role: 'Software Engineer',
     detail: `
       <ul>
-    <li>Re-architected and built market data infrastructure in Golang to reduce latency from 150 ms to sub-10 ms for
-millions of users by eliminating Redis/Kafka single points of failure and reducing infrastructure costs by over
-70%.</li>
-    <li>Led redesign of historical market data system…</li>
-    <li>Designed and implemented in-memory WebSocket streaming…</li>
+    <li>Cut market‑data latency 150ms → <10ms for millions by removing Redis/Kafka SPOFs and cutting infra costs 70%+.</li>
+    <li>Built a 2M msg/sec WebSocket streaming system with single-digit millisecond latency.</li>
+    <li>Drove infra and performance optimization across DBs, Kafka, K8s, and caching, saving $400K+/year while improving reliability.</li>
     </ul>
   `,
   },
   {
-    title: 'Frontend',
-    role: 'Senior Engineer',
-    detail: 'Built a reusable component system for rapid launches.',
+    title: 'Xendit',
+    role: 'Senior Software Engineer',
+    detail: `
+      <ul>
+        <li>Designed Golang payment microservices processing millions of transactions/day with 99.9% uptime.</li>
+        <li>Built refund infrastructure to handle complex payment scenarios efficiently.</li>
+        <li>Mentored engineers and raised platform standards across reliability and performance.</li>
+      </ul>
+  `,
   },
   {
-    title: 'Creative Dev',
-    role: 'Freelance',
-    detail: 'Crafted immersive web experiences for brands.',
+    title: 'Metro East Technology Resources',
+    role: 'Software Engineer',
+    detail: `
+      <ul>
+        <li>Built fault-tolerant Golang telecom backend systems supporting thousands of concurrent users.</li>
+        <li>Led AWS migration in 6 months, improving scalability and reliability.</li>
+        <li>Established CI/CD pipelines with Jenkins, Docker, and Kubernetes.</li>
+      </ul>
+  `,
   },
   {
-    title: 'Systems',
-    role: 'Platform',
-    detail: 'Architected scalable infra with focus on reliability.',
+    title: 'How I Build',
+    role: 'I build systems where milliseconds, scale, and reliability all matter.',
+    detail: `
+      <ul>
+        <li>Design low-latency, real-time systems with clear performance budgets and measurable goals.</li>
+        <li>Favor simple, resilient architectures that eliminate single points of failure.</li>
+        <li>Optimize holistically. Correctness first, then performance, then cost.</li>
+        <li>Treat observability, testing, and rollout safety as core features, not afterthoughts.</li>
+      </ul>
+  `,
   },
 ]
 
@@ -44,8 +61,10 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div class="scene-root">
     <canvas id="scene"></canvas>
     <div class="hud">
-      <div class="title">Boat Portfolio</div>
-      <div class="subtitle">Rotate the world with left/right keys.</div>
+      <div class="title">Lee Sicat</div>
+      <div class="subtitle">Software Engineer building low‑latency, high‑scale distributed systems</div>
+
+      <div class="subtitle">Explore with left/right keys or drag to scroll.</div>
       <div class="labels">
         ${islands
           .map(
@@ -646,7 +665,7 @@ const animate = () => {
   updateActiveFromRotation()
 
   islandMeshes.forEach((island, index) => {
-    island.position.y = -0.45 +Math.sin(elapsed * 1.4 + index) * 0.05
+    island.position.y = -0.45 + Math.sin(elapsed * 1.0 + index) * 0.02
   })
 
   const width = renderer.domElement.clientWidth
@@ -655,7 +674,8 @@ const animate = () => {
     const card = cards[index]
     if (!card) return
     if (index !== activeIndex) {
-      card.style.opacity = '0.15'
+      card.style.opacity = '0.04'
+      card.style.background = 'rgba(6, 10, 18, 0.92)'
     }
     island.getWorldPosition(labelAnchor)
     labelAnchor.y += 1.8
@@ -669,8 +689,9 @@ const animate = () => {
     const y = (-labelScreen.y * 0.5 + 0.5) * height
     if (index === activeIndex) {
       card.style.opacity = '1'
+      card.style.background = 'rgba(6, 10, 18, 0.97)'
     }
-    card.style.transform = `translate(-50%, -110%) translate(${x}px, ${y}px)`
+    card.style.transform = `translate(-50%, -90%) translate(${x}px, ${y}px)`
   })
 
   composer.render()
