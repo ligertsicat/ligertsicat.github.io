@@ -370,41 +370,6 @@ const boat = new THREE.Group()
 boat.position.set(0, 0, 14)
 scene.add(boat)
 
-const makeParticleField = (count: number, size: number, color: number, opacity: number) => {
-  const geometry = new THREE.BufferGeometry()
-  const positions = new Float32Array(count * 3)
-  const velocities = new Float32Array(count * 3)
-  for (let i = 0; i < count; i += 1) {
-    const idx = i*3
-    positions[idx] = (Math.random() - 0.5) * 0.6
-    positions[idx + 1] = -0.6 + Math.random() * 0.3
-    positions[idx + 2] = -20
-    velocities[idx] = (Math.random() - 0.5) * 0.02
-    velocities[idx + 1] = 0.01 + Math.random() * 0.03
-    velocities[idx + 2] = -0.08 - Math.random() * 0.08
-  }
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  const material = new THREE.PointsMaterial({
-    color,
-    size,
-    transparent: true,
-    opacity,
-    depthWrite: false,
-  })
-  const points = new THREE.Points(geometry, material)
-  return { points, positions, velocities }
-}
-
-const mist = makeParticleField(220, 0.14, 0x9dd6ff, 0.25)
-mist.points.position.set(0, 0, 0)
-mist.points.rotation.y = Math.PI / 2
-boat.add(mist.points)
-
-const spray = makeParticleField(120, 0.08, 0xffffff, 0.5)
-spray.points.position.set(0, 0.05, 0)
-spray.points.rotation.y = Math.PI / 2
-boat.add(spray.points)
-
 const boatUrl = new URL('./BoatWSail.glb', import.meta.url).toString()
 loader.load(
   boatUrl,
@@ -443,7 +408,6 @@ for (let i = 0; i < 4; i += 1) {
   const starGeo = new THREE.BufferGeometry()
   const starCount = 220
   const positions = new Float32Array(starCount * 3)
-  const twinkle = new Float32Array(starCount)
   for (let j = 0; j < starCount; j += 1) {
     const radius = 14 + Math.random() * 6
     const theta = Math.random() * Math.PI * 2
@@ -451,10 +415,8 @@ for (let i = 0; i < 4; i += 1) {
     positions[j * 3] = Math.cos(theta) * radius
     positions[j * 3 + 1] = y
     positions[j * 3 + 2] = Math.sin(theta) * radius
-    twinkle[j] = Math.random()
   }
   starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  starGeo.setAttribute('twinkle', new THREE.BufferAttribute(twinkle, 1))
   const starMat = new THREE.PointsMaterial({
     color: 0xe6f4ff,
     size: 0.14 - i * 0.012,
@@ -614,9 +576,6 @@ const animate = () => {
       child.position.x = -40
     }
   })
-
-  ;(mist.points.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true
-  ;(spray.points.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true
 
   camera.position.x += (targetX - camera.position.x) * 0.04
   camera.position.y += (0.5 - targetY - camera.position.y) * 0.04
