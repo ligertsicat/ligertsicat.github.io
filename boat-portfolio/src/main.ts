@@ -6,8 +6,6 @@ import { Water } from 'three/examples/jsm/objects/Water'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass'
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
-import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass'
 
 const islands = [
   {
@@ -62,9 +60,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <canvas id="scene"></canvas>
     <div class="hud">
       <div class="title">Lee Sicat</div>
-      <div class="subtitle">Software Engineer building low‑latency, high‑scale distributed systems</div>
+      <div class="subtitle">Software Engineer building low-latency, high-scale distributed systems</div>
 
-      <div class="subtitle">Explore with left/right keys or drag to scroll.</div>
+      <div class="subtitle2">Explore with left/right keys or drag to scroll.</div>
       <div class="labels">
         ${islands
           .map(
@@ -80,6 +78,12 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       </div>
       <div class="nav">
         ${islands.map((_, index) => `<button class="dot" data-index="${index}"></button>`).join('')}
+      </div>
+    </div>
+    <div class="contact-pill">
+      <div class="contact-title">Contact</div>
+      <div class="contact-body">
+        <div>linkedin.com/in/ligertsicat</div>
       </div>
     </div>
     <button class="nav-arrow nav-arrow-left" aria-label="Previous island">‹</button>
@@ -707,3 +711,4 @@ window.addEventListener('resize', () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   composer.setSize(window.innerWidth, window.innerHeight)
 })
+
