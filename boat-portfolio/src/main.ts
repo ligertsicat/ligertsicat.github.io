@@ -6,12 +6,22 @@ import { Water } from 'three/examples/jsm/objects/Water'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
+import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass'
 
 const islands = [
   {
-    title: 'Product Design',
-    role: 'Lead Designer',
-    detail: 'Shipped a core product redesign that lifted retention.',
+    title: 'Software Engineer',
+    role: 'Robinhood',
+    detail: `
+      <ul>
+    <li>Re-architected and built market data infrastructure in Golang to reduce latency from 150 ms to sub-10 ms for
+millions of users by eliminating Redis/Kafka single points of failure and reducing infrastructure costs by over
+70%.</li>
+    <li>Led redesign of historical market data system…</li>
+    <li>Designed and implemented in-memory WebSocket streaming…</li>
+    </ul>
+  `,
   },
   {
     title: 'Frontend',
@@ -53,6 +63,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         ${islands.map((_, index) => `<button class="dot" data-index="${index}"></button>`).join('')}
       </div>
     </div>
+    <button class="nav-arrow nav-arrow-left" aria-label="Previous island">‹</button>
+    <button class="nav-arrow nav-arrow-right" aria-label="Next island">›</button>
   </div>
 `
 
@@ -62,7 +74,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.setSize(window.innerWidth, window.innerHeight)
 
 const scene = new THREE.Scene()
-scene.fog = new THREE.Fog(0x0e1420, 10, 30)
+scene.fog = new THREE.Fog(0x0e1420, 10, 70)
 
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100)
 camera.position.set(0, 0, 20)
@@ -71,19 +83,54 @@ const composer = new EffectComposer(renderer)
 composer.addPass(new RenderPass(scene, camera))
 const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
-  0.2,
+  0.1,
   0.4,
   0.2
 )
 composer.addPass(bloomPass)
 
+const gradePass = new ShaderPass({
+  uniforms: {
+    tDiffuse: { value: null },
+    tint: { value: new THREE.Vector3(1.04, 1.0, 0.96) },
+    amount: { value: 0.2 },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform vec3 tint;
+    uniform float amount;
+    varying vec2 vUv;
+    void main() {
+      vec4 color = texture2D(tDiffuse, vUv);
+      vec3 graded = color.rgb * tint;
+      color.rgb = mix(color.rgb, graded, amount);
+      gl_FragColor = color;
+    }
+  `,
+})
+// composer.addPass(gradePass)
+
+const bokehPass = new BokehPass(scene, camera, {
+  focus: 14.0,
+  aperture: 0.00012,
+  maxblur: 0.004,
+})
+// composer.addPass(bokehPass)
+
 
 const loader = new GLTFLoader()
 
-const ambient = new THREE.AmbientLight(0x8aa0c8, 0.45)
+const ambient = new THREE.AmbientLight(0x8aa0c8, 0.7)
 scene.add(ambient)
 
-const warmAmbient = new THREE.AmbientLight(0xffc6a0, 0.12)
+const warmAmbient = new THREE.AmbientLight(0xffc6a0, 0.5)
 scene.add(warmAmbient)
 
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.1)
@@ -93,6 +140,8 @@ scene.add(keyLight)
 const rimLight = new THREE.DirectionalLight(0x7ad1ff, 0.6)
 rimLight.position.set(-6, 2, -3)
 scene.add(rimLight)
+
+
 
 const glowGeometry = new THREE.SphereGeometry(28, 48, 32)
 const glowMaterial = new THREE.ShaderMaterial({
@@ -154,6 +203,40 @@ scene.add(sky)
 
 const clouds = new THREE.Group()
 scene.add(clouds)
+
+const fogCanvas = document.createElement('canvas')
+fogCanvas.width = 256
+fogCanvas.height = 256
+const fogCtx = fogCanvas.getContext('2d')
+if (fogCtx) {
+  fogCtx.clearRect(0, 0, fogCanvas.width, fogCanvas.height)
+  for (let i = 0; i < 8; i += 1) {
+    const x = 40 + Math.random() * 170
+    const y = 40 + Math.random() * 170
+    const r = 40 + Math.random() * 60
+    const g = fogCtx.createRadialGradient(x, y, 0, x, y, r)
+    g.addColorStop(0, 'rgba(255,255,255,0.18)')
+    g.addColorStop(1, 'rgba(255,255,255,0)')
+    fogCtx.fillStyle = g
+    fogCtx.beginPath()
+    fogCtx.arc(x, y, r, 0, Math.PI * 2)
+    fogCtx.fill()
+  }
+}
+const fogTexture = new THREE.CanvasTexture(fogCanvas)
+fogTexture.wrapS = THREE.RepeatWrapping
+fogTexture.wrapT = THREE.RepeatWrapping
+fogTexture.repeat.set(2, 2)
+const fogMaterial = new THREE.MeshBasicMaterial({
+  map: fogTexture,
+  transparent: true,
+  opacity: 0.2,
+  depthWrite: false,
+})
+const fogLayer = new THREE.Mesh(new THREE.PlaneGeometry(28, 18), fogMaterial)
+fogLayer.rotation.x = -Math.PI / 2
+fogLayer.position.set(0, -0.3, 6)
+scene.add(fogLayer)
 
 const normalSize = 256
 const normalData = new Uint8Array(normalSize * normalSize * 4)
@@ -238,33 +321,53 @@ islandAngles.forEach((angle) => {
   islandMeshes.push(island)
 })
 
-const islandUrl = new URL('./fantasy_island.glb', import.meta.url).toString()
-loader.load(
-  islandUrl,
-  (gltf: GLTF) => {
-    islandMeshes.forEach((island) => {
-      const model = gltf.scene.clone(true)
-      model.scale.set(0.03, 0.03, 0.03)
-      model.position.set(0, -1.4, 0)
-      island.add(model)
-    })
-  },
-  undefined,
-  (error: unknown) => {
-    console.error('Failed to load island model', error)
-  }
-)
+const islandUrls = [
+  new URL('./islands1.glb', import.meta.url).toString(),
+  new URL('./islands2.glb', import.meta.url).toString(),
+  new URL('./islands3.glb', import.meta.url).toString(),
+  new URL('./islands4.glb', import.meta.url).toString(),
+]
 
-const cloudUrl = new URL('./Cloud_1.gltf', import.meta.url).toString()
+islandMeshes.forEach((island, index) => {
+  const url = islandUrls[index % islandUrls.length]
+  loader.load(
+    url,
+    (gltf: GLTF) => {
+      const model = gltf.scene
+      model.scale.set(0.03, 0.03, 0.03)
+      model.position.set(0, -1.2, 0)
+      island.add(model)
+    },
+    undefined,
+    (error: unknown) => {
+      console.error('Failed to load island model', error)
+    }
+  )
+})
+
+const cloudUrl = new URL('./clouds.glb', import.meta.url).toString()
 loader.load(
   cloudUrl,
   (gltf: GLTF) => {
-    for (let i = 0; i < 6; i += 1) {
+    for (let i = 0; i < 20; i += 1) {
       const model = gltf.scene.clone(true)
-      const scale = 0.8 + Math.random() * 0.6
+      model.traverse((child) => {
+        if ('material' in child) {
+          const mesh = child as THREE.Mesh
+          const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+          materials.forEach((material) => {
+            material.transparent = true
+            material.opacity = 0.2
+            material.depthWrite = false
+          })
+        }
+      })
+      const scale = 0 + Math.random() * 0.6
       model.scale.set(scale, scale, scale)
-      model.position.set((Math.random() - 0.5) * 18, 4 + Math.random() * 3, -12 + Math.random() * 8)
+      model.position.set(-35 + Math.random() * 70, 5 + Math.random() * 3, -10 + Math.random() * 8)
       model.rotation.y = (Math.random() - 0.5) * 0.6
+      model.rotation.x = (Math.random() - 0.5) * 0.6
+      model.rotation.z = (Math.random() - 0.5) * 0.6
       clouds.add(model)
     }
   },
@@ -275,7 +378,7 @@ loader.load(
 )
 
 const boat = new THREE.Group()
-boat.position.set(0, 0, 13)
+boat.position.set(0, 0, 14)
 scene.add(boat)
 
 const makeParticleField = (count: number, size: number, color: number, opacity: number) => {
@@ -318,9 +421,9 @@ loader.load(
   boatUrl,
   (gltf: GLTF) => {
     const model = gltf.scene
-    model.scale.set(0.9, 0.9, 0.9)
+    model.scale.set(1.4, 1.4, 1.4)
     model.rotation.y = Math.PI / 2
-    model.position.set(0, -0.6, 0)
+    model.position.set(0, -0.7, 0)
     boat.add(model)
   },
   undefined,
@@ -370,6 +473,8 @@ window.addEventListener('mousemove', (event) => {
 let activeIndex = 0
 const cards = Array.from(document.querySelectorAll<HTMLDivElement>('.island-card'))
 const dots = Array.from(document.querySelectorAll<HTMLButtonElement>('.dot'))
+const arrowLeft = document.querySelector<HTMLButtonElement>('.nav-arrow-left')
+const arrowRight = document.querySelector<HTMLButtonElement>('.nav-arrow-right')
 
 const setActiveIndex = (index: number) => {
   activeIndex = (index + islands.length) % islands.length
@@ -383,6 +488,26 @@ const setActiveIndex = (index: number) => {
 
 setActiveIndex(0)
 
+const shortestAngle = (a: number, b: number) => {
+  return Math.atan2(Math.sin(a - b), Math.cos(a - b))
+}
+
+const updateActiveFromRotation = () => {
+  let closestIndex = 0
+  let closestDistance = Infinity
+  islandAngles.forEach((angle, index) => {
+    const target = -angle
+    const delta = Math.abs(shortestAngle(worldRotation, target))
+    if (delta < closestDistance) {
+      closestDistance = delta
+      closestIndex = index
+    }
+  })
+  if (closestIndex !== activeIndex) {
+    setActiveIndex(closestIndex)
+  }
+}
+
 dots.forEach((dot) => {
   dot.addEventListener('click', () => {
     setActiveIndex(Number(dot.dataset.index))
@@ -391,24 +516,54 @@ dots.forEach((dot) => {
   })
 })
 
-window.addEventListener('keydown', (event) => {
-  if (event.key === 'ArrowRight') {
-    setActiveIndex(activeIndex + 1)
-    targetRotation = nearestTargetRotation(worldRotation, -islandAngles[activeIndex])
-    snapping = true
-  }
-  if (event.key === 'ArrowLeft') {
-    setActiveIndex(activeIndex - 1)
-    targetRotation = nearestTargetRotation(worldRotation, -islandAngles[activeIndex])
-    snapping = true
-  }
-})
+const stepRight = () => {
+  targetRotation = worldRotation - rotationStep
+  snapping = true
+}
+
+const stepLeft = () => {
+  targetRotation = worldRotation + rotationStep
+  snapping = true
+}
+
+let holdLeft = false
+let holdRight = false
+const holdSpeed = 0.012
+
+const startHoldLeft = () => {
+  holdLeft = true
+  holdRight = false
+  snapping = false
+}
+
+const startHoldRight = () => {
+  holdRight = true
+  holdLeft = false
+  snapping = false
+}
+
+const stopHold = () => {
+  holdLeft = false
+  holdRight = false
+}
+
+arrowRight?.addEventListener('click', stepRight)
+arrowLeft?.addEventListener('click', stepLeft)
+arrowRight?.addEventListener('pointerdown', startHoldRight)
+arrowLeft?.addEventListener('pointerdown', startHoldLeft)
+arrowRight?.addEventListener('pointerup', stopHold)
+arrowLeft?.addEventListener('pointerup', stopHold)
+arrowRight?.addEventListener('pointerleave', stopHold)
+arrowLeft?.addEventListener('pointerleave', stopHold)
 
 let worldRotation = 0
 let targetRotation = 0
 let snapping = false
 const TAU = Math.PI * 2
 let wheelLock = false
+const rotationStep = (TAU / islands.length) * 0.5
+let isDragging = false
+let dragLastX = 0
 
 const nearestTargetRotation = (current: number, target: number) => {
   let delta = ((target - current + Math.PI) % TAU) - Math.PI
@@ -426,28 +581,54 @@ window.addEventListener(
     }, 260)
     if (Math.abs(event.deltaY) < 4) return
     if (event.deltaY > 0) {
-      setActiveIndex(activeIndex + 1)
+      targetRotation = worldRotation + rotationStep
     } else {
-      setActiveIndex(activeIndex - 1)
+      targetRotation = worldRotation - rotationStep
     }
-    targetRotation = nearestTargetRotation(worldRotation, -islandAngles[activeIndex])
     snapping = true
   },
   { passive: true }
 )
+
+canvas.addEventListener('pointerdown', (event) => {
+  isDragging = true
+  dragLastX = event.clientX
+  snapping = false
+  canvas.setPointerCapture(event.pointerId)
+})
+
+canvas.addEventListener('pointermove', (event) => {
+  if (!isDragging) return
+  const deltaX = event.clientX - dragLastX
+  dragLastX = event.clientX
+  worldRotation += deltaX * 0.003
+  targetRotation = worldRotation
+  updateActiveFromRotation()
+})
+
+const endDrag = (event: PointerEvent) => {
+  if (!isDragging) return
+  isDragging = false
+  canvas.releasePointerCapture(event.pointerId)
+}
+
+canvas.addEventListener('pointerup', endDrag)
+canvas.addEventListener('pointerleave', endDrag)
 
 const clock = new THREE.Clock()
 const labelAnchor = new THREE.Vector3()
 const labelScreen = new THREE.Vector3()
 const animate = () => {
   const elapsed = clock.getElapsedTime()
-  boat.position.y = -1.1 + Math.sin(elapsed * 1.6) * 0.08
+  boat.position.y = -1.1 + Math.sin(elapsed * 1.6) * 0.03
   boat.rotation.z = Math.sin(elapsed * 1.2) * 0.03
   water.material.uniforms.time.value = elapsed
+  fogTexture.offset.x = elapsed * 0.01
+  fogTexture.offset.y = -elapsed * 0.005
   clouds.children.forEach((child, index) => {
     child.position.x += 0.002 + index * 0.0002
-    if (child.position.x > 10) {
-      child.position.x = -10
+    if (child.position.x > 40) {
+      child.position.x = -40
     }
   })
   const updateParticles = (field: { positions: Float32Array; velocities: Float32Array }) => {
@@ -480,15 +661,24 @@ const animate = () => {
   })
 
   if (snapping) {
-    worldRotation += (targetRotation - worldRotation) * 0.06
-    if (Math.abs(targetRotation - worldRotation) < 0.001) {
+    worldRotation += (targetRotation - worldRotation) * 0.02
+    if (Math.abs(targetRotation - worldRotation) < 0.0005) {
       snapping = false
     }
   } else {
-    worldRotation += (targetRotation - worldRotation) * 0.04
+    worldRotation += (targetRotation - worldRotation) * 0.02
+  }
+  if (holdLeft) {
+    worldRotation += holdSpeed
+    targetRotation = worldRotation
+  }
+  if (holdRight) {
+    worldRotation -= holdSpeed
+    targetRotation = worldRotation
   }
   const sway = Math.sin(elapsed * 0.6) * 0.03
   world.rotation.y = worldRotation + sway
+  updateActiveFromRotation()
 
   islandMeshes.forEach((island, index) => {
     island.position.y = -0.45 +Math.sin(elapsed * 1.4 + index) * 0.05
