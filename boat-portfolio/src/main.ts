@@ -24,7 +24,7 @@ const islands = [
     role: 'Senior Software Engineer',
     detail: `
       <ul>
-        <li>Designed Golang payment microservices processing millions of transactions/day with 99.9% uptime.</li>
+        <li>Designed payment microservices processing millions of transactions/day with 99.9% uptime.</li>
         <li>Built refund infrastructure to handle complex payment scenarios efficiently.</li>
         <li>Mentored engineers and raised platform standards across reliability and performance.</li>
       </ul>
@@ -35,7 +35,7 @@ const islands = [
     role: 'Software Engineer',
     detail: `
       <ul>
-        <li>Built fault-tolerant Golang telecom backend systems supporting thousands of concurrent users.</li>
+        <li>Built fault-tolerant telecom backend systems supporting thousands of concurrent users.</li>
         <li>Led AWS migration in 6 months, improving scalability and reliability.</li>
         <li>Established CI/CD pipelines with Jenkins, Docker, and Kubernetes.</li>
       </ul>
